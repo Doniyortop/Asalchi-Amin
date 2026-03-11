@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="<%= currentLang %>">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title><%= title %> — Asalchi Amin</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Натуральный мёд и продукты пчеловодства с пасек возле Самарканда. Без сахара, без добавок — только настоящий вкус. Доставка по Самарканду." />
+    <meta name="keywords" content="мёд Самарканд, натуральный мёд, домашний мёд, продукты пчеловодства, мёд оптом, купить мёд Самарканд, Asalchi Amin" />
+    <meta name="author" content="Asalchi Amin" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://asalchi-amin.uz/" />
+    <meta property="og:title" content="Asalchi Amin — Натуральный мёд из Самарканда" />
+    <meta property="og:description" content="Натуральный мёд и продукты пчеловодства с пасек возле Самарканда. Без сахара, без добавок." />
+    <meta property="og:image" content="https://asalchi-amin.uz/images/honey-hero.jpg" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://asalchi-amin.uz/" />
+    <meta property="twitter:title" content="Asalchi Amin — Натуральный мёд из Самарканда" />
+    <meta property="twitter:description" content="Натуральный мёд и продукты пчеловодства с пасек возле Самарканда." />
+    <meta property="twitter:image" content="https://asalchi-amin.uz/images/honey-hero.jpg" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://asalchi-amin.uz/" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <link rel="stylesheet" href="/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="header-left">
+          <a href="/" class="logo">
+            <span class="logo-mark">🍯</span>
+            <span class="logo-text">Asalchi Amin</span>
+            <span class="logo-sub">Домашний мёд — Самарканд</span>
+          </a>
+          <div class="lang-switcher">
+            <a href="?lang=ru" class="<%= currentLang === 'ru' ? 'active' : '' %>">
+              RU
+            </a>
+            <a href="?lang=uz" class="<%= currentLang === 'uz' ? 'active' : '' %>">
+              UZ
+            </a>
+            <a href="?lang=en" class="<%= currentLang === 'en' ? 'active' : '' %>">
+              EN
+            </a>
+          </div>
+        </div>
+        <nav class="main-nav">
+          <a href="/"><%= t('nav.catalog') %></a>
+          <a href="/cart"><%= t('nav.cart') %> (<%= cartCount %>)</a>
+          <% if (currentUser) { %>
+            <% if (currentUser.isAdmin) { %>
+              <a href="/admin"><%= t('nav.admin') %></a>
+            <% } %>
+            <span class="nav-user">
+              <span><%= currentUser.name %></span>
+              <form action="/logout" method="POST" class="inline-form">
+                <button type="submit" class="link-button"><%= t('nav.logout') %></button>
+              </form>
+            </span>
+          <% } else { %>
+            <a href="/login"><%= t('nav.login') %></a>
+            <a href="/register"><%= t('nav.register') %></a>
+          <% } %>
+        </nav>
+      </div>
+    </header>
+
+    <main class="site-main">
+      <div class="container">
+        <%- body %>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          © <%= new Date().getFullYear() %> Asalchi Amin. Домашний мёд в Самарканде.
+        </div>
+        <div class="footer-contacts">
+          <span>Телефон: <a href="tel:+998">+998</a></span>
+          <span>Оплата: наличными при получении</span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

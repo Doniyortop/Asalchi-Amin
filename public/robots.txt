@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://asalchi-amin.uz/sitemap.xml
+
+# Block common non-content paths
+Disallow: /admin/
+Disallow: /uploads/
+Disallow: /images/

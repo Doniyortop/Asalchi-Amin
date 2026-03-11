@@ -1,0 +1,120 @@
+<section class="page-header">
+  <div>
+    <h1>Админ-панель</h1>
+    <p class="subtitle">Управление товарами и заказами.</p>
+  </div>
+</section>
+
+<section class="admin-grid">
+  <div class="card">
+    <div class="card-header">
+      <h2>Товары</h2>
+      <a href="/admin/products/new" class="btn-small">+ Новый товар</a>
+    </div>
+
+    <% if (!products.length) { %>
+      <p>Товары пока не добавлены.</p>
+    <% } else { %>
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Цена</th>
+            <th>Статус</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% products.forEach(p => { %>
+            <tr>
+              <td><%= p.id %></td>
+              <td><%= p.name %></td>
+              <td><%= p.price.toLocaleString('ru-RU') %> сум</td>
+              <td>
+                <% if (p.isActive) { %>
+                  <span class="badge badge-success">Активен</span>
+                <% } else { %>
+                  <span class="badge">Скрыт</span>
+                <% } %>
+              </td>
+              <td class="table-actions">
+                <a href="/admin/products/<%= p.id %>/edit" class="link-button">Редактировать</a>
+                <form
+                  action="/admin/products/<%= p.id %>/delete"
+                  method="POST"
+                  class="inline-form"
+                  onsubmit="return confirm('Удалить товар?');"
+                >
+                  <button type="submit" class="link-button danger">Удалить</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Заказы</h2>
+    </div>
+
+    <% if (!orders.length) { %>
+      <p>Заказов пока нет.</p>
+    <% } else { %>
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Клиент</th>
+            <th>Телефон</th>
+            <th>Сумма</th>
+            <th>Координаты</th>
+            <th>Статус</th>
+            <th>Создан</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% orders.forEach(o => { %>
+            <tr>
+              <td><%= o.id %></td>
+              <td><%= o.customerName %></td>
+              <td><%= o.customerPhone %></td>
+              <td><%= o.total.toLocaleString('ru-RU') %> сум</td>
+              <td>
+                <% if (o.location) { %>
+                  <a
+                    href="https://www.google.com/maps?q=<%= o.location.latitude %>,<%= o.location.longitude %>"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <%= o.location.latitude.toFixed(4) %>, <%= o.location.longitude.toFixed(4) %>
+                  </a>
+                <% } else { %>
+                  —
+                <% } %>
+              </td>
+              <td><%= o.status %></td>
+              <td><%= o.createdAt.toLocaleString('ru-RU') %></td>
+              <td>
+                <form action="/admin/orders/<%= o.id %>/status" method="POST" class="inline-form">
+                  <select name="status">
+                    <option value="new" <%= o.status === 'new' ? 'selected' : '' %>>Новый</option>
+                    <option value="in_progress" <%= o.status === 'in_progress' ? 'selected' : '' %>>В работе</option>
+                    <option value="done" <%= o.status === 'done' ? 'selected' : '' %>>Доставлен</option>
+                    <option value="cancelled" <%= o.status === 'cancelled' ? 'selected' : '' %>>Отменён</option>
+                  </select>
+                  <button type="submit" class="btn-ghost btn-xxs">OK</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</section>
+

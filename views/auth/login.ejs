@@ -1,0 +1,43 @@
+<section class="page-header">
+  <div>
+    <h1><%= t('auth.loginTitle') %></h1>
+    <p class="subtitle"><%= t('auth.loginSubtitle') %></p>
+  </div>
+</section>
+
+<section class="card form-card">
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <form action="/login" method="POST" class="form">
+    <div class="form-group">
+      <label for="email"><%= t('auth.email') %></label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        value="<%= values.email || '' %>"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="password"><%= t('auth.password') %></label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        required
+      />
+    </div>
+
+    <button type="submit" class="btn full-width"><%= t('auth.loginButton') %></button>
+
+    <p class="form-footer">
+      <%= t('auth.noAccount') %>
+      <a href="/register"><%= t('auth.toRegister') %></a>
+    </p>
+  </form>
+</section>
+

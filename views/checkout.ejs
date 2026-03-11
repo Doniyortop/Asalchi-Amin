@@ -1,0 +1,150 @@
+<section class="page-header">
+  <div>
+    <h1><%= t('checkout.title') %></h1>
+    <p class="subtitle"><%= t('checkout.subtitle') %></p>
+  </div>
+</section>
+
+<section class="checkout-layout">
+  <div class="card form-card">
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form action="/checkout" method="POST" class="form">
+      <div class="form-group">
+        <label for="address"><%= t('checkout.addressLabel') %></label>
+        <textarea
+          id="address"
+          name="address"
+          rows="3"
+          required
+        ><%= values.address || '' %></textarea>
+        <small class="field-hint">
+          <%= t('checkout.addressHint') %>
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label><%= t('checkout.mapLabel') %></label>
+        <div id="delivery-map" class="delivery-map"></div>
+        <input type="hidden" id="latitude" name="latitude" value="<%= values.latitude || '' %>" />
+        <input type="hidden" id="longitude" name="longitude" value="<%= values.longitude || '' %>" />
+        <small class="field-hint">
+          <%= t('checkout.mapHint') %>
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="comment"><%= t('checkout.commentLabel') %></label>
+        <textarea
+          id="comment"
+          name="comment"
+          rows="2"
+        ><%= values.comment || '' %></textarea>
+      </div>
+
+      <div class="form-group">
+        <label><%= t('checkout.paymentLabel') %></label>
+        <div class="radio-group">
+          <label class="radio">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="cash"
+              <%= values.paymentMethod === 'cash' || !values.paymentMethod ? 'checked' : '' %>
+            />
+            <span><%= t('checkout.paymentCash') %></span>
+          </label>
+        </div>
+        <small class="field-hint">
+          <%= t('checkout.paymentHint') %>
+        </small>
+      </div>
+
+      <button type="submit" class="btn full-width"><%= t('checkout.submit') %></button>
+    </form>
+  </div>
+
+  <aside class="card order-summary">
+    <h2><%= t('checkout.summaryTitle') %></h2>
+    <ul class="order-items">
+      <% cart.forEach(item => { %>
+        <li class="order-item">
+          <div>
+            <div class="order-item-name"><%= item.name %></div>
+            <div class="order-item-meta">
+              <span><%= t('cart.headers.qty') %>: <%= item.quantity %></span>
+              <span><%= t('cart.headers.price') %>: <%= item.price.toLocaleString('ru-RU') %> сум</span>
+            </div>
+          </div>
+          <div class="order-item-sum">
+            <%= (item.price * item.quantity).toLocaleString('ru-RU') %> сум
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+
+    <div class="order-total">
+      <%= t('cart.total') %>: <strong><%= total.toLocaleString('ru-RU') %> сум</strong>
+    </div>
+  </aside>
+</section>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+<script>
+  (function () {
+    if (typeof L === 'undefined') return;
+
+    var mapElement = document.getElementById('delivery-map');
+    if (!mapElement) return;
+
+    var defaultLat = 39.6542; // Самарканд
+    var defaultLng = 66.9597;
+
+    var latInput = document.getElementById('latitude');
+    var lngInput = document.getElementById('longitude');
+
+    var hasInitial =
+      latInput.value &&
+      lngInput.value &&
+      !isNaN(parseFloat(latInput.value)) &&
+      !isNaN(parseFloat(lngInput.value));
+
+    var startLat = hasInitial ? parseFloat(latInput.value) : defaultLat;
+    var startLng = hasInitial ? parseFloat(lngInput.value) : defaultLng;
+
+    var map = L.map('delivery-map', {
+      zoomControl: true,
+      attributionControl: false
+    }).setView([startLat, startLng], hasInitial ? 15 : 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    var marker = null;
+    if (hasInitial) {
+      marker = L.marker([startLat, startLng]).addTo(map);
+    }
+
+    function setPoint(lat, lng) {
+      latInput.value = lat.toFixed(6);
+      lngInput.value = lng.toFixed(6);
+      if (!marker) {
+        marker = L.marker([lat, lng]).addTo(map);
+      } else {
+        marker.setLatLng([lat, lng]);
+      }
+    }
+
+    map.on('click', function (e) {
+      setPoint(e.latlng.lat, e.latlng.lng);
+    });
+  })();
+</script>
+

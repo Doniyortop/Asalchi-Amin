@@ -1,0 +1,56 @@
+<section class="page-header">
+  <div>
+    <h1><%= t('home.title') %></h1>
+    <p class="subtitle"><%= t('home.subtitle') %></p>
+  </div>
+  <div class="highlight-card">
+    <h2><%= t('home.deliveryTitle') %></h2>
+    <ul>
+      <% t('home.deliveryItems').forEach(function (line) { %>
+        <li><%= line %></li>
+      <% }) %>
+    </ul>
+  </div>
+</section>
+
+<section class="products-grid">
+  <% if (!products.length) { %>
+    <p><%= t('home.emptyProducts') %></p>
+  <% } %>
+
+  <% products.forEach(product => { %>
+    <article class="product-card">
+      <div class="product-image">
+        <% if (product.image) { %>
+          <img src="<%= product.image %>" alt="<%= product.name %>" />
+        <% } else { %>
+          <div class="placeholder-image">Мёд</div>
+        <% } %>
+      </div>
+      <div class="product-body">
+        <h3><%= product.name %></h3>
+        <% if (product.description) { %>
+          <p class="product-description"><%= product.description %></p>
+        <% } %>
+        <div class="product-footer">
+          <div class="product-price">
+            <span class="price-value"><%= product.price.toLocaleString('ru-RU') %> сум</span>
+            <% if (product.unit) { %>
+              <span class="price-unit"><%= product.unit %></span>
+            <% } %>
+          </div>
+          <form action="/cart/add/<%= product.id %>" method="POST" class="add-to-cart-form">
+            <input
+              type="number"
+              name="quantity"
+              min="1"
+              value="1"
+            />
+            <button type="submit" class="btn-small"><%= t('home.addToCart') %></button>
+          </form>
+        </div>
+      </div>
+    </article>
+  <% }) %>
+</section>
+

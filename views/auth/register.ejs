@@ -1,0 +1,68 @@
+<section class="page-header">
+  <div>
+    <h1><%= t('auth.registerTitle') %></h1>
+    <p class="subtitle"><%= t('auth.registerSubtitle') %></p>
+  </div>
+</section>
+
+<section class="card form-card">
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <form action="/register" method="POST" class="form">
+    <div class="form-group">
+      <label for="name"><%= t('auth.name') %></label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        value="<%= values.name || '' %>"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="phone"><%= t('auth.phone') %></label>
+      <input
+        type="tel"
+        id="phone"
+        name="phone"
+        placeholder="+998..."
+        value="<%= values.phone || '' %>"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="email"><%= t('auth.email') %></label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        value="<%= values.email || '' %>"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="password"><%= t('auth.password') %></label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        minlength="6"
+        required
+      />
+      <small class="field-hint"><%= t('auth.passwordHint') %></small>
+    </div>
+
+    <button type="submit" class="btn full-width"><%= t('auth.registerButton') %></button>
+
+    <p class="form-footer">
+      <%= t('auth.haveAccount') %>
+      <a href="/login"><%= t('auth.toLogin') %></a>
+    </p>
+  </form>
+</section>
+

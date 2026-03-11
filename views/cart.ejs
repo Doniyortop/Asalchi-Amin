@@ -1,0 +1,63 @@
+<section class="page-header">
+  <div>
+    <h1><%= t('cart.title') %></h1>
+    <p class="subtitle"><%= t('cart.subtitle') %></p>
+  </div>
+</section>
+
+<section class="card">
+  <% if (!cart.length) { %>
+    <p><%= t('cart.empty') %></p>
+    <a href="/" class="btn"><%= t('cart.goCatalog') %></a>
+  <% } else { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th><%= t('cart.headers.product') %></th>
+          <th><%= t('cart.headers.price') %></th>
+          <th><%= t('cart.headers.qty') %></th>
+          <th><%= t('cart.headers.sum') %></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% cart.forEach(item => { %>
+          <tr>
+            <td><%= item.name %></td>
+            <td><%= item.price.toLocaleString('ru-RU') %> сум</td>
+            <td>
+              <form action="/cart/update/<%= item.productId %>" method="POST" class="inline-form">
+                <input
+                  type="number"
+                  name="quantity"
+                  min="1"
+                  value="<%= item.quantity %>"
+                />
+                <button type="submit" class="btn-ghost btn-xxs">OK</button>
+              </form>
+            </td>
+            <td><%= (item.price * item.quantity).toLocaleString('ru-RU') %> сум</td>
+            <td>
+              <form action="/cart/remove/<%= item.productId %>" method="POST" class="inline-form">
+                <button type="submit" class="link-button danger"><%= t('cart.remove') %></button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <div class="cart-summary">
+      <div class="cart-total">
+        <%= t('cart.total') %>: <strong><%= total.toLocaleString('ru-RU') %> сум</strong>
+      </div>
+      <div class="cart-actions">
+        <a href="/" class="btn-ghost"><%= t('cart.continue') %></a>
+        <% if (cart.length) { %>
+          <a href="/checkout" class="btn"><%= t('cart.checkout') %></a>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+</section>
+
