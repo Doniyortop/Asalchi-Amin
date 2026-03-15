@@ -529,6 +529,22 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Create demo admin user
+async function createDemoAdmin() {
+  const existingAdmin = users.find(u => u.email === 'admin@asalchi.uz');
+  if (!existingAdmin) {
+    const hash = await bcrypt.hash('admin123', 10);
+    users.push({
+      id: 1,
+      name: 'Администратор',
+      email: 'admin@asalchi.uz',
+      phone: '+998',
+      passwordHash: hash,
+      isAdmin: true
+    });
+  }
+}
+
 // Inject globals into templates
 app.use((req, res, next) => {
   ensureCart(req);

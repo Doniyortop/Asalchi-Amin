@@ -57,7 +57,7 @@
 
 <!-- Форма для отзыва -->
 <section class="card" style="margin-top: 30px;">
-  <h2><%= t('reviews.leaveReview') %></h2>
+  <h2>Оставить отзыв</h2>
   <p class="subtitle">
     Поделитесь впечатлениями о качестве нашей продукции и обслуживания
   </p>
@@ -67,12 +67,12 @@
     <input type="hidden" name="productId" value="<%= order.items && order.items[0] ? order.items[0].productId : '' %>">
     
     <div class="form-group">
-      <label><%= t('auth.name') %></label>
+      <label>Имя</label>
       <input type="text" name="customerName" value="<%= order.customerName %>" required>
     </div>
     
     <div class="form-group">
-      <label><%= t('reviews.yourRating') %></label>
+      <label>Ваша оценка</label>
       <div class="rating-input">
         <% for (let i = 1; i <= 5; i++) { %>
           <input type="radio" name="rating" value="<%= i %>" id="star<%= i %>" required>
@@ -84,12 +84,12 @@
     </div>
     
     <div class="form-group">
-      <label><%= t('reviews.comment') %></label>
+      <label>Комментарий</label>
       <textarea name="comment" rows="4" placeholder="Расскажите о вашем впечатлении..."></textarea>
     </div>
     
     <button type="submit" class="btn btn-primary">
-      <%= t('reviews.submitReview') %>
+      Отправить отзыв
     </button>
   </form>
   
@@ -112,7 +112,7 @@ document.getElementById('reviewForm').addEventListener('submit', async function(
     
     if (result.success) {
       document.getElementById('reviewMessage').innerHTML = 
-        '<div class="success-message"><%= t("reviews.reviewPending") %></div>';
+        '<div class="success-message">Ваш отзыв отправлен на модерацию</div>';
       document.getElementById('reviewMessage').style.display = 'block';
       this.style.display = 'none';
     } else {
