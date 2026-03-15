@@ -49,58 +49,7 @@ let users = [
 let orders = [];
 
 // In-memory reviews database
-let reviews = [
-  {
-    id: 1,
-    orderId: 1,
-    productId: 1,
-    customerName: "Али Каримов",
-    rating: 5,
-    comment: "Отличный липовый мёд! Настоящий вкус, без примесей. Доставка быстрая, упаковка качественная. Рекомендую всем!",
-    date: "2024-03-10",
-    approved: true
-  },
-  {
-    id: 2,
-    orderId: 2,
-    productId: 1,
-    customerName: "Гульнора Рахимова",
-    rating: 4,
-    comment: "Хороший мёд, немного сладкий для меня. Но в целом качество отличное. Беру второй раз.",
-    date: "2024-03-08",
-    approved: true
-  },
-  {
-    id: 3,
-    orderId: 3,
-    productId: 2,
-    customerName: "Бахром Турсунов",
-    rating: 5,
-    comment: "Акациевый мёд - просто находка! Светлый, ароматный, дети едят с удовольствием. Спасибо за качественный продукт!",
-    date: "2024-03-05",
-    approved: true
-  },
-  {
-    id: 4,
-    orderId: 4,
-    productId: 3,
-    customerName: "Дилфуза Исмаилова",
-    rating: 4,
-    comment: "Пыльца очень полезные, добавляю в кашу ребенку. Увидела улучшение аппетита. Качество на высоте!",
-    date: "2024-03-03",
-    approved: true
-  },
-  {
-    id: 5,
-    orderId: null,
-    productId: 1,
-    customerName: "Жамшид Абдуллаев",
-    rating: 3,
-    comment: "Мёд хороший, но доставка была немного дольше обещанной. Возможно из-за пробок на дорогах.",
-    date: "2024-03-12",
-    approved: false // Ожидает модерации
-  }
-];
+let reviews = [];
 
 // Simple i18n
 const SUPPORTED_LANGS = ['ru', 'uz', 'en'];
