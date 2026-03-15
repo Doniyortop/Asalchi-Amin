@@ -876,7 +876,7 @@ app.get('/reviews', (req, res) => {
   });
   
   res.render('reviews', {
-    title: t('reviews.title'),
+    title: 'Отзывы',
     reviews: productReviews,
     reviewsByProduct,
     products
@@ -905,7 +905,7 @@ app.post('/reviews', (req, res) => {
   
   res.json({ 
     success: true, 
-    message: t('reviews.reviewPending'),
+    message: 'Ваш отзыв отправлен на модерацию',
     review: newReview 
   });
 });

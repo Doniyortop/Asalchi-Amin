@@ -1,6 +1,6 @@
 <section class="page-header">
   <div>
-    <h1><%= t('reviews.title') %></h1>
+    <h1>Отзывы</h1>
     <p class="subtitle">
       Отзывы наших клиентов о качестве продукции и обслуживания
     </p>
@@ -22,7 +22,7 @@
               <%= generateStars(avgRating) %>
               <span class="rating-number"><%= avgRating.toFixed(1) %></span>
             </div>
-            <span class="reviews-count"><%= productReviews.length %> <%= t('reviews.totalReviews') %></span>
+            <span class="reviews-count"><%= productReviews.length %> всего отзывов</span>
           </div>
         </div>
         
@@ -51,7 +51,7 @@
     <% }); %>
   <% } else { %>
     <div class="empty-state">
-      <h3><%= t('reviews.noReviews') %></h3>
+      <h3>Пока нет отзывов</h3>
       <p>Будьте первым, кто оставит отзыв о нашей продукции!</p>
     </div>
   <% } %>
