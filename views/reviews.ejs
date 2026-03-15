@@ -19,7 +19,7 @@
           <h3><%= product.name %></h3>
           <div class="rating-summary">
             <div class="stars">
-              <%= generateStars(avgRating) %>
+              <%- generateStars(avgRating) %>
               <span class="rating-number"><%= avgRating.toFixed(1) %></span>
             </div>
             <span class="reviews-count"><%= productReviews.length %> всего отзывов</span>
@@ -33,7 +33,7 @@
                 <div class="reviewer-info">
                   <strong><%= review.customerName %></strong>
                   <div class="review-rating">
-                    <%= generateStars(review.rating) %>
+                    <%- generateStars(review.rating) %>
                   </div>
                 </div>
                 <div class="review-date"><%= review.date %></div>
