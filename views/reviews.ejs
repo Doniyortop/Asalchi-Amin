@@ -1,0 +1,192 @@
+<section class="page-header">
+  <div>
+    <h1><%= t('reviews.title') %></h1>
+    <p class="subtitle">
+      Отзывы наших клиентов о качестве продукции и обслуживания
+    </p>
+  </div>
+</section>
+
+<main class="container">
+  <% if (Object.keys(reviewsByProduct).length > 0) { %>
+    <% Object.keys(reviewsByProduct).forEach(productId => { %>
+      <% const product = products.find(p => p.id === Number(productId)); %>
+      <% const productReviews = reviewsByProduct[productId]; %>
+      <% const avgRating = productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length; %>
+      
+      <div class="product-reviews">
+        <div class="product-info">
+          <h3><%= product.name %></h3>
+          <div class="rating-summary">
+            <div class="stars">
+              <%= generateStars(avgRating) %>
+              <span class="rating-number"><%= avgRating.toFixed(1) %></span>
+            </div>
+            <span class="reviews-count"><%= productReviews.length %> <%= t('reviews.totalReviews') %></span>
+          </div>
+        </div>
+        
+        <div class="reviews-list">
+          <% productReviews.forEach(review => { %>
+            <div class="review-card">
+              <div class="review-header">
+                <div class="reviewer-info">
+                  <strong><%= review.customerName %></strong>
+                  <div class="review-rating">
+                    <%= generateStars(review.rating) %>
+                  </div>
+                </div>
+                <div class="review-date"><%= review.date %></div>
+              </div>
+            </div>
+            <div class="review-content">
+              <% if (review.comment) { %>
+                <p><%= review.comment %></p>
+              <% } %>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="empty-state">
+      <h3><%= t('reviews.noReviews') %></h3>
+      <p>Будьте первым, кто оставит отзыв о нашей продукции!</p>
+    </div>
+  <% } %>
+</main>
+
+<style>
+.product-reviews {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: var(--bg-alt);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.product-info {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.product-info h3 {
+  margin: 0 0 10px 0;
+  color: var(--primary);
+}
+
+.rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  color: #ddd;
+  font-size: 18px;
+}
+
+.star.filled {
+  color: #ffc107;
+}
+
+.rating-number {
+  font-weight: bold;
+  color: var(--text);
+  margin-left: 5px;
+}
+
+.reviews-count {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.review-card {
+  padding: 15px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.reviewer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.review-date {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-content p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+@media (max-width: 480px) {
+  .product-reviews {
+    margin-bottom: 20px;
+    padding: 15px;
+  }
+  
+  .rating-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .review-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+</style>
+
+<%
+function generateStars(rating) {
+  let stars = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) {
+      stars += '<span class="star filled">★</span>';
+    } else {
+      stars += '<span class="star">☆</span>';
+    }
+  }
+  return stars;
+}
+%>

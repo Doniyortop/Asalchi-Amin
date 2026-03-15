@@ -1,0 +1,230 @@
+<section class="page-header">
+  <div>
+    <h1>Управление отзывами</h1>
+    <p class="subtitle">
+      Модерация отзывов клиентов
+    </p>
+  </div>
+</section>
+
+<main class="container">
+  <!-- Ожидающие модерации -->
+  <section class="admin-section">
+    <h2>Ожидающие модерации (<%= pendingReviews.length %>)</h2>
+    
+    <% if (pendingReviews.length > 0) { %>
+      <div class="reviews-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Товар</th>
+              <th>Клиент</th>
+              <th>Оценка</th>
+              <th>Комментарий</th>
+              <th>Дата</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% pendingReviews.forEach(review => { %>
+              <% const product = products.find(p => p.id === review.productId); %>
+              <tr>
+                <td><%= review.id %></td>
+                <td>
+                  <% if (product) { %>
+                    <%= product.name %>
+                  <% } else { %>
+                    Товар #<%= review.productId %>
+                  <% } %>
+                </td>
+                <td><%= review.customerName %></td>
+                <td>
+                  <div class="rating-stars">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <% if (i <= review.rating) { %>
+                        <span class="star filled">★</span>
+                      <% } else { %>
+                        <span class="star">☆</span>
+                      <% } %>
+                    <% } %>
+                  </div>
+                </td>
+                <td>
+                  <% if (review.comment) { %>
+                    <%= review.comment.length > 50 ? review.comment.substring(0, 50) + '...' : review.comment %>
+                  <% } else { %>
+                    <em>Без комментария</em>
+                  <% } %>
+                </td>
+                <td><%= review.date %></td>
+                <td>
+                  <form method="POST" action="/admin/reviews/<%= review.id %>/approve" style="display: inline;">
+                    <button type="submit" class="btn btn-success" style="margin-right: 5px;">✓</button>
+                  </form>
+                  <form method="POST" action="/admin/reviews/<%= review.id %>/delete" style="display: inline;" 
+                        onsubmit="return confirm('Удалить отзыв?')">
+                    <button type="submit" class="btn btn-danger">✕</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <p>Нет отзывов, ожидающих модерации</p>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- Одобренные отзывы -->
+  <section class="admin-section">
+    <h2>Одобренные отзывы (<%= approvedReviews.length %>)</h2>
+    
+    <% if (approvedReviews.length > 0) { %>
+      <div class="reviews-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Товар</th>
+              <th>Клиент</th>
+              <th>Оценка</th>
+              <th>Комментарий</th>
+              <th>Дата</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% approvedReviews.forEach(review => { %>
+              <% const product = products.find(p => p.id === review.productId); %>
+              <tr>
+                <td><%= review.id %></td>
+                <td>
+                  <% if (product) { %>
+                    <%= product.name %>
+                  <% } else { %>
+                    Товар #<%= review.productId %>
+                  <% } %>
+                </td>
+                <td><%= review.customerName %></td>
+                <td>
+                  <div class="rating-stars">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <% if (i <= review.rating) { %>
+                        <span class="star filled">★</span>
+                      <% } else { %>
+                        <span class="star">☆</span>
+                      <% } %>
+                    <% } %>
+                  </div>
+                </td>
+                <td>
+                  <% if (review.comment) { %>
+                    <%= review.comment.length > 50 ? review.comment.substring(0, 50) + '...' : review.comment %>
+                  <% } else { %>
+                    <em>Без комментария</em>
+                  <% } %>
+                </td>
+                <td><%= review.date %></td>
+                <td>
+                  <form method="POST" action="/admin/reviews/<%= review.id %>/delete" 
+                        onsubmit="return confirm('Удалить отзыв?')">
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <p>Нет одобренных отзывов</p>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<style>
+.admin-section {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: var(--bg-alt);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-section h2 {
+  margin: 0 0 20px 0;
+  color: var(--primary);
+}
+
+.reviews-table {
+  overflow-x: auto;
+}
+
+.rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  color: #ddd;
+  font-size: 16px;
+}
+
+.star.filled {
+  color: #ffc107;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+@media (max-width: 768px) {
+  .admin-section {
+    padding: 15px;
+  }
+  
+  .table {
+    font-size: 14px;
+  }
+  
+  .btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+</style>

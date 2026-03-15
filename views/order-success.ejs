@@ -55,3 +55,166 @@
   </div>
 </section>
 
+<!-- Форма для отзыва -->
+<section class="card" style="margin-top: 30px;">
+  <h2><%= t('reviews.leaveReview') %></h2>
+  <p class="subtitle">
+    Поделитесь впечатлениями о качестве нашей продукции и обслуживания
+  </p>
+  
+  <form id="reviewForm" class="review-form">
+    <input type="hidden" name="orderId" value="<%= order.id %>">
+    <input type="hidden" name="productId" value="<%= order.items && order.items[0] ? order.items[0].productId : '' %>">
+    
+    <div class="form-group">
+      <label><%= t('auth.name') %></label>
+      <input type="text" name="customerName" value="<%= order.customerName %>" required>
+    </div>
+    
+    <div class="form-group">
+      <label><%= t('reviews.yourRating') %></label>
+      <div class="rating-input">
+        <% for (let i = 1; i <= 5; i++) { %>
+          <input type="radio" name="rating" value="<%= i %>" id="star<%= i %>" required>
+          <label for="star<%= i %>" class="star-label">
+            <span class="star <%= i <= 3 ? 'empty' : '' %>">☆</span>
+          </label>
+        <% } %>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label><%= t('reviews.comment') %></label>
+      <textarea name="comment" rows="4" placeholder="Расскажите о вашем впечатлении..."></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">
+      <%= t('reviews.submitReview') %>
+    </button>
+  </form>
+  
+  <div id="reviewMessage" class="review-message" style="display: none;"></div>
+</section>
+
+<script>
+document.getElementById('reviewForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  
+  try {
+    const response = await fetch('/reviews', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      document.getElementById('reviewMessage').innerHTML = 
+        '<div class="success-message"><%= t("reviews.reviewPending") %></div>';
+      document.getElementById('reviewMessage').style.display = 'block';
+      this.style.display = 'none';
+    } else {
+      document.getElementById('reviewMessage').innerHTML = 
+        '<div class="error-message">Ошибка: ' + (result.error || 'Попробуйте еще раз') + '</div>';
+      document.getElementById('reviewMessage').style.display = 'block';
+    }
+  } catch (error) {
+    document.getElementById('reviewMessage').innerHTML = 
+      '<div class="error-message">Ошибка соединения. Попробуйте еще раз.</div>';
+    document.getElementById('reviewMessage').style.display = 'block';
+  }
+});
+
+// Интерактивные звезды
+document.querySelectorAll('.star-label').forEach(label => {
+  label.addEventListener('click', function() {
+    const radio = this.querySelector('input[type="radio"]');
+    radio.checked = true;
+    updateStars();
+  });
+});
+
+function updateStars() {
+  document.querySelectorAll('.star-label').forEach((label, index) => {
+    const radio = label.querySelector('input[type="radio"]');
+    const star = label.querySelector('.star');
+    
+    if (radio.checked) {
+      star.textContent = '★';
+      star.style.color = '#ffc107';
+    } else {
+      star.textContent = '☆';
+      star.style.color = '#ddd';
+    }
+  });
+}
+
+// Инициализация при загрузке
+updateStars();
+</script>
+
+<style>
+.review-form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.rating-input {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.star-label {
+  cursor: pointer;
+  font-size: 24px;
+  transition: all 0.2s;
+}
+
+.star-label:hover .star {
+  transform: scale(1.1);
+}
+
+.star {
+  color: #ddd;
+}
+
+.star.empty {
+  color: #ddd;
+}
+
+.review-message {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: var(--radius-md);
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 480px) {
+  .review-form {
+    padding: 0 10px;
+  }
+  
+  .rating-input {
+    justify-content: space-between;
+  }
+  
+  .star-label {
+    font-size: 20px;
+  }
+}
+</style>
+

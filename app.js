@@ -48,6 +48,60 @@ let users = [
 
 let orders = [];
 
+// In-memory reviews database
+let reviews = [
+  {
+    id: 1,
+    orderId: 1,
+    productId: 1,
+    customerName: "Али Каримов",
+    rating: 5,
+    comment: "Отличный липовый мёд! Настоящий вкус, без примесей. Доставка быстрая, упаковка качественная. Рекомендую всем!",
+    date: "2024-03-10",
+    approved: true
+  },
+  {
+    id: 2,
+    orderId: 2,
+    productId: 1,
+    customerName: "Гульнора Рахимова",
+    rating: 4,
+    comment: "Хороший мёд, немного сладкий для меня. Но в целом качество отличное. Беру второй раз.",
+    date: "2024-03-08",
+    approved: true
+  },
+  {
+    id: 3,
+    orderId: 3,
+    productId: 2,
+    customerName: "Бахром Турсунов",
+    rating: 5,
+    comment: "Акациевый мёд - просто находка! Светлый, ароматный, дети едят с удовольствием. Спасибо за качественный продукт!",
+    date: "2024-03-05",
+    approved: true
+  },
+  {
+    id: 4,
+    orderId: 4,
+    productId: 3,
+    customerName: "Дилфуза Исмаилова",
+    rating: 4,
+    comment: "Пыльца очень полезные, добавляю в кашу ребенку. Увидела улучшение аппетита. Качество на высоте!",
+    date: "2024-03-03",
+    approved: true
+  },
+  {
+    id: 5,
+    orderId: null,
+    productId: 1,
+    customerName: "Жамшид Абдуллаев",
+    rating: 3,
+    comment: "Мёд хороший, но доставка была немного дольше обещанной. Возможно из-за пробок на дорогах.",
+    date: "2024-03-12",
+    approved: false // Ожидает модерации
+  }
+];
+
 // Simple i18n
 const SUPPORTED_LANGS = ['ru', 'uz', 'en'];
 const DEFAULT_LANG = 'ru';
@@ -132,6 +186,25 @@ const translations = {
       orderContents: 'Состав заказа',
       totalToPay: 'Итого к оплате',
       backToCatalog: 'Вернуться в каталог'
+    },
+    reviews: {
+      title: 'Отзывы',
+      leaveReview: 'Оставить отзыв',
+      yourRating: 'Ваша оценка',
+      comment: 'Комментарий',
+      submitReview: 'Отправить отзыв',
+      reviewSuccess: 'Спасибо за отзыв!',
+      reviewPending: 'Ваш отзыв отправлен на модерацию',
+      averageRating: 'Средний рейтинг',
+      totalReviews: 'всего отзывов',
+      noReviews: 'Пока нет отзывов',
+      filterByRating: 'Фильтр по оценке',
+      allRatings: 'Все оценки',
+      fiveStars: '5 звезд',
+      fourStars: '4 звезды',
+      threeStars: '3 звезды',
+      twoStars: '2 звезды',
+      oneStar: '1 звезда'
     }
   },
   uz: {
@@ -214,6 +287,25 @@ const translations = {
       orderContents: 'Buyurtma tarkibi',
       totalToPay: 'Jami to‘lov',
       backToCatalog: 'Katalogga qaytish'
+    },
+    reviews: {
+      title: 'Sharhlar',
+      leaveReview: 'Sharh qoldirish',
+      yourRating: 'Sizning baholang',
+      comment: 'Izoh',
+      submitReview: 'Sharhni yuborish',
+      reviewSuccess: 'Sharh uchun rahmat!',
+      reviewPending: 'Sizning sharhingiz moderatsiyaga yuborildi',
+      averageRating: "O'rtacha reyting",
+      totalReviews: 'jami sharhlar',
+      noReviews: 'Hozircha sharhlar yo\'q',
+      filterByRating: 'Baho bo\'yicha filter',
+      allRatings: 'Barcha baholar',
+      fiveStars: '5 yulduz',
+      fourStars: '4 yulduz',
+      threeStars: '3 yulduz',
+      twoStars: '2 yulduz',
+      oneStar: '1 yulduz'
     }
   },
   en: {
@@ -295,6 +387,25 @@ const translations = {
       orderContents: 'Order contents',
       totalToPay: 'Total to pay',
       backToCatalog: 'Back to catalog'
+    },
+    reviews: {
+      title: 'Reviews',
+      leaveReview: 'Leave a review',
+      yourRating: 'Your rating',
+      comment: 'Comment',
+      submitReview: 'Submit review',
+      reviewSuccess: 'Thank you for your review!',
+      reviewPending: 'Your review has been sent for moderation',
+      averageRating: 'Average rating',
+      totalReviews: 'total reviews',
+      noReviews: 'No reviews yet',
+      filterByRating: 'Filter by rating',
+      allRatings: 'All ratings',
+      fiveStars: '5 stars',
+      fourStars: '4 stars',
+      threeStars: '3 stars',
+      twoStars: '2 stars',
+      oneStar: '1 star'
     }
   }
 };
@@ -435,7 +546,12 @@ app.use((req, res, next) => {
 // Главная — каталог
 app.get('/', (req, res) => {
   const activeProducts = products.filter((p) => p.isActive);
-  res.render('index', { title: 'Каталог мёда', products: activeProducts });
+  const approvedReviews = reviews.filter(r => r.approved);
+  res.render('index', { 
+    title: 'Каталог мёда', 
+    products: activeProducts,
+    reviews: approvedReviews
+  });
 });
 
 // Корзина
@@ -745,6 +861,81 @@ app.post('/admin/orders/:id/status', requireAdmin, (req, res) => {
     order.status = status || order.status;
   }
   res.redirect('/admin');
+});
+
+// Отзывы
+app.get('/reviews', (req, res) => {
+  const productReviews = reviews.filter(r => r.productId && r.approved);
+  const reviewsByProduct = {};
+  
+  productReviews.forEach(review => {
+    if (!reviewsByProduct[review.productId]) {
+      reviewsByProduct[review.productId] = [];
+    }
+    reviewsByProduct[review.productId].push(review);
+  });
+  
+  res.render('reviews', {
+    title: t('reviews.title'),
+    reviews: productReviews,
+    reviewsByProduct,
+    products
+  });
+});
+
+app.post('/reviews', (req, res) => {
+  const { orderId, productId, rating, comment, customerName } = req.body;
+  
+  if (!orderId || !productId || !rating || !customerName) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  
+  const newReview = {
+    id: reviews.length ? reviews[reviews.length - 1].id + 1 : 1,
+    orderId: Number(orderId),
+    productId: Number(productId),
+    customerName,
+    rating: Number(rating),
+    comment: comment || '',
+    date: new Date().toISOString().split('T')[0],
+    approved: false // Требует модерации
+  };
+  
+  reviews.push(newReview);
+  
+  res.json({ 
+    success: true, 
+    message: t('reviews.reviewPending'),
+    review: newReview 
+  });
+});
+
+// Админ-панель - управление отзывами
+app.get('/admin/reviews', requireAdmin, (req, res) => {
+  const pendingReviews = reviews.filter(r => !r.approved);
+  const approvedReviews = reviews.filter(r => r.approved);
+  
+  res.render('admin/reviews', {
+    title: 'Управление отзывами',
+    pendingReviews,
+    approvedReviews,
+    products
+  });
+});
+
+app.post('/admin/reviews/:id/approve', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const review = reviews.find(r => r.id === id);
+  if (review) {
+    review.approved = true;
+  }
+  res.redirect('/admin/reviews');
+});
+
+app.post('/admin/reviews/:id/delete', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  reviews = reviews.filter(r => r.id !== id);
+  res.redirect('/admin/reviews');
 });
 
 // Sitemap

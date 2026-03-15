@@ -32,6 +32,30 @@
         <% if (product.description) { %>
           <p class="product-description"><%= product.description %></p>
         <% } %>
+        
+        <!-- Рейтинг и отзывы -->
+        <% 
+        const productReviews = reviews.filter(r => r.productId === product.id && r.approved);
+        const avgRating = productReviews.length > 0 ? 
+          productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length : 0;
+        %>
+        <% if (productReviews.length > 0) { %>
+          <div class="product-rating">
+            <div class="stars">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <% if (i <= Math.round(avgRating)) { %>
+                  <span class="star filled">★</span>
+                <% } else { %>
+                  <span class="star">☆</span>
+                <% } %>
+              <% } %>
+            </div>
+            <span class="rating-text">
+              <%= avgRating.toFixed(1) %> (<%= productReviews.length %> <%= t('reviews.totalReviews') %>)
+            </span>
+          </div>
+        <% } %>
+        
         <div class="product-footer">
           <div class="product-price">
             <span class="price-value"><%= product.price.toLocaleString('ru-RU') %> сум</span>

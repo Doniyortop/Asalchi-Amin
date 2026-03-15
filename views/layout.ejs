@@ -70,6 +70,7 @@
         <nav class="main-nav">
           <a href="/"><%= t('nav.catalog') %></a>
           <a href="/cart"><%= t('nav.cart') %> (<%= cartCount %>)</a>
+          <a href="/reviews"><%= t('reviews.title') %></a>
           <% if (currentUser) { %>
             <% if (currentUser.isAdmin) { %>
               <a href="/admin"><%= t('nav.admin') %></a>
