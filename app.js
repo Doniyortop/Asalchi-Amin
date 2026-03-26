@@ -576,29 +576,45 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { name, email, phone, password } = req.body;
-  const values = { name, email, phone };
-  if (!name || !email || !phone || !password) {
+  const { name, phone, email, password } = req.body;
+  const values = { name, phone, email };
+  
+  if (!name || !phone || !password) {
     return res.render('auth/register', {
       title: 'Регистрация',
-      error: 'Заполните все поля',
+      error: 'Заполните обязательные поля (имя, телефон, пароль)',
       values
     });
   }
-  const existing = users.find((u) => u.email === email);
-  if (existing) {
+  
+  // Проверка уникальности телефона
+  const existingByPhone = users.find((u) => u.phone === phone);
+  if (existingByPhone) {
     return res.render('auth/register', {
       title: 'Регистрация',
-      error: 'Пользователь с таким email уже существует',
+      error: 'Пользователь с таким телефоном уже существует',
       values
     });
   }
+  
+  // Проверка уникальности email (если указан)
+  if (email) {
+    const existingByEmail = users.find((u) => u.email === email);
+    if (existingByEmail) {
+      return res.render('auth/register', {
+        title: 'Регистрация',
+        error: 'Пользователь с таким email уже существует',
+        values
+      });
+    }
+  }
+  
   const hash = await bcrypt.hash(password, 10);
   const newUser = {
     id: users.length ? users[users.length - 1].id + 1 : 2,
     name,
-    email,
     phone,
+    email: email || null, // email может быть null
     passwordHash: hash,
     isAdmin: false
   };
@@ -619,24 +635,37 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const values = { email };
-  const user = users.find((u) => u.email === email);
-  if (!user) {
+  const { login, password } = req.body;
+  const values = { login };
+  
+  if (!login || !password) {
     return res.render('auth/login', {
       title: 'Вход в аккаунт',
-      error: 'Неверный email или пароль',
+      error: 'Заполните все поля',
       values
     });
   }
+  
+  // Ищем пользователя по телефону или email
+  const user = users.find((u) => u.phone === login || u.email === login);
+  
+  if (!user) {
+    return res.render('auth/login', {
+      title: 'Вход в аккаунт',
+      error: 'Пользователь с таким телефоном или email не найден',
+      values
+    });
+  }
+  
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) {
     return res.render('auth/login', {
       title: 'Вход в аккаунт',
-      error: 'Неверный email или пароль',
+      error: 'Неверный пароль',
       values
     });
   }
+  
   req.session.user = {
     id: user.id,
     name: user.name,

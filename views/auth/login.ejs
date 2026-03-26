@@ -1,7 +1,7 @@
 <section class="page-header">
   <div>
-    <h1><%= t('auth.loginTitle') %></h1>
-    <p class="subtitle"><%= t('auth.loginSubtitle') %></p>
+    <h1>Вход в аккаунт</h1>
+    <p class="subtitle">Войдите по телефону или email</p>
   </div>
 </section>
 
@@ -12,18 +12,20 @@
 
   <form action="/login" method="POST" class="form">
     <div class="form-group">
-      <label for="email"><%= t('auth.email') %></label>
+      <label for="login">Телефон или Email *</label>
       <input
-        type="email"
-        id="email"
-        name="email"
-        value="<%= values.email || '' %>"
+        type="text"
+        id="login"
+        name="login"
+        placeholder="+998... или email@example.com"
+        value="<%= values.login || '' %>"
         required
       />
+      <small class="field-hint">Введите номер телефона или email</small>
     </div>
 
     <div class="form-group">
-      <label for="password"><%= t('auth.password') %></label>
+      <label for="password">Пароль *</label>
       <input
         type="password"
         id="password"
@@ -32,11 +34,11 @@
       />
     </div>
 
-    <button type="submit" class="btn full-width"><%= t('auth.loginButton') %></button>
+    <button type="submit" class="btn full-width">Войти</button>
 
     <p class="form-footer">
-      <%= t('auth.noAccount') %>
-      <a href="/register"><%= t('auth.toRegister') %></a>
+      Нет аккаунта?
+      <a href="/register">Зарегистрироваться</a>
     </p>
   </form>
 </section>

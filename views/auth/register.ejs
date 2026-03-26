@@ -1,7 +1,7 @@
 <section class="page-header">
   <div>
-    <h1><%= t('auth.registerTitle') %></h1>
-    <p class="subtitle"><%= t('auth.registerSubtitle') %></p>
+    <h1>Регистрация</h1>
+    <p class="subtitle">Создайте аккаунт для быстрых заказов</p>
   </div>
 </section>
 
@@ -12,7 +12,7 @@
 
   <form action="/register" method="POST" class="form">
     <div class="form-group">
-      <label for="name"><%= t('auth.name') %></label>
+      <label for="name">Имя *</label>
       <input
         type="text"
         id="name"
@@ -23,7 +23,7 @@
     </div>
 
     <div class="form-group">
-      <label for="phone"><%= t('auth.phone') %></label>
+      <label for="phone">Телефон *</label>
       <input
         type="tel"
         id="phone"
@@ -32,21 +32,23 @@
         value="<%= values.phone || '' %>"
         required
       />
+      <small class="field-hint">Основной способ связи для заказов</small>
     </div>
 
     <div class="form-group">
-      <label for="email"><%= t('auth.email') %></label>
+      <label for="email">Email (необязательно)</label>
       <input
         type="email"
         id="email"
         name="email"
+        placeholder="email@example.com"
         value="<%= values.email || '' %>"
-        required
       />
+      <small class="field-hint">Для получения акций и уведомлений</small>
     </div>
 
     <div class="form-group">
-      <label for="password"><%= t('auth.password') %></label>
+      <label for="password">Пароль *</label>
       <input
         type="password"
         id="password"
@@ -54,14 +56,14 @@
         minlength="6"
         required
       />
-      <small class="field-hint"><%= t('auth.passwordHint') %></small>
+      <small class="field-hint">Минимум 6 символов</small>
     </div>
 
-    <button type="submit" class="btn full-width"><%= t('auth.registerButton') %></button>
+    <button type="submit" class="btn full-width">Зарегистрироваться</button>
 
     <p class="form-footer">
-      <%= t('auth.haveAccount') %>
-      <a href="/login"><%= t('auth.toLogin') %></a>
+      Уже есть аккаунт?
+      <a href="/login">Войти</a>
     </p>
   </form>
 </section>
