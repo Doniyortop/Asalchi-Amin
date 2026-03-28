@@ -6,48 +6,103 @@ const methodOverride = require('method-override');
 const expressLayouts = require('express-ejs-layouts');
 const multer = require('multer');
 const fs = require('fs');
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// In-memory "database"
-let products = [
-  {
-    id: 1,
-    name: 'Мёд липовый',
-    description: 'Натуральный липовый мёд из окрестностей Самарканда.',
-    price: 60000,
-    unit: 'за 1 кг',
-    image: '/images/linden-honey.jpg',
-    isActive: true
-  },
-  {
-    id: 2,
-    name: 'Мёд акациевый',
-    description: 'Светлый и нежный мёд из акации, подходит для детей.',
-    price: 70000,
-    unit: 'за 1 кг',
-    image: '/images/acacia-honey.jpg',
-    isActive: true
-  },
-  {
-    id: 3,
-    name: 'Пыльца (обножка)',
-    description: 'Натуральная пчелиная пыльца — источник витаминов.',
-    price: 50000,
-    unit: 'за 300 г',
-    image: '/images/pollen.jpg',
-    isActive: true
+// SQLite Database Setup
+const dbPath = path.join(__dirname, 'database.sqlite');
+const db = new sqlite3.Database(dbPath);
+
+db.serialize(() => {
+  // Users table
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE,
+    phone TEXT UNIQUE NOT NULL,
+    passwordHash TEXT NOT NULL,
+    isAdmin BOOLEAN DEFAULT 0
+  )`);
+
+  // Products table
+  db.run(`CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    price REAL NOT NULL,
+    unit TEXT,
+    image TEXT,
+    isActive BOOLEAN DEFAULT 1
+  )`);
+
+  // Orders table
+  db.run(`CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER,
+    customerName TEXT,
+    customerPhone TEXT,
+    address TEXT,
+    comment TEXT,
+    paymentMethod TEXT,
+    latitude REAL,
+    longitude REAL,
+    total REAL,
+    status TEXT DEFAULT 'new',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    items JSON,
+    FOREIGN KEY(userId) REFERENCES users(id)
+  )`);
+
+  // Reviews table
+  db.run(`CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    orderId INTEGER,
+    productId INTEGER,
+    customerName TEXT,
+    rating INTEGER,
+    comment TEXT,
+    date TEXT,
+    approved BOOLEAN DEFAULT 0
+  )`);
+});
+
+// Database wrapper for async/await
+const dbAsync = {
+  run: (sql, params = []) => new Promise((resolve, reject) => {
+    db.run(sql, params, function(err) {
+      if (err) reject(err);
+      else resolve({ id: this.lastID, changes: this.changes });
+    });
+  }),
+  get: (sql, params = []) => new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  }),
+  all: (sql, params = []) => new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  })
+};
+
+// Seed initial products if empty
+async function seedProducts() {
+  const row = await dbAsync.get('SELECT COUNT(*) as count FROM products');
+  if (row.count === 0) {
+    const initialProducts = [
+      ['Мёд липовый', 'Натуральный липовый мёд из окрестностей Самарканда.', 60000, 'за 1 кг', '/images/linden-honey.jpg', 1],
+      ['Мёд акациевый', 'Светлый и нежный мёд из акации, подходит для детей.', 70000, 'за 1 кг', '/images/acacia-honey.jpg', 1],
+      ['Пыльца (обножка)', 'Натуральная пчелиная пыльца — источник витаминов.', 50000, 'за 300 г', '/images/pollen.jpg', 1]
+    ];
+    for (const p of initialProducts) {
+      await dbAsync.run('INSERT INTO products (name, description, price, unit, image, isActive) VALUES (?, ?, ?, ?, ?, ?)', p);
+    }
   }
-];
-
-let users = [];
-let orders = [];
-let reviews = [];
-
-// Helper to get next ID
-function getNextId(array) {
-  return array.length > 0 ? Math.max(...array.map(item => item.id)) + 1 : 1;
 }
 
 // Simple i18n
@@ -464,17 +519,13 @@ function requireAdmin(req, res, next) {
 
 // Create demo admin user
 async function createDemoAdmin() {
-  const existingAdmin = users.find(u => u.email === 'admin@asalchi.uz');
+  const existingAdmin = await dbAsync.get('SELECT * FROM users WHERE email = ?', ['admin@asalchi.uz']);
   if (!existingAdmin) {
     const hash = await bcrypt.hash('admin123', 10);
-    users.push({
-      id: getNextId(users),
-      name: 'Администратор',
-      email: 'admin@asalchi.uz',
-      phone: '+998',
-      passwordHash: hash,
-      isAdmin: true
-    });
+    await dbAsync.run(
+      'INSERT INTO users (name, email, phone, passwordHash, isAdmin) VALUES (?, ?, ?, ?, ?)',
+      ['Администратор', 'admin@asalchi.uz', '+998', hash, 1]
+    );
   }
 }
 
@@ -493,13 +544,26 @@ app.use((req, res, next) => {
 // ROUTES
 
 // Главная — каталог
-app.get('/', (req, res) => {
-  const activeProducts = products.filter((p) => p.isActive);
-  const approvedReviews = reviews.filter(r => r.approved);
+app.get('/', async (req, res) => {
+  const { search } = req.query;
+  let products;
+  
+  if (search) {
+    const query = `%${search.toLowerCase()}%`;
+    products = await dbAsync.all(
+      'SELECT * FROM products WHERE isActive = 1 AND (LOWER(name) LIKE ? OR LOWER(description) LIKE ?)',
+      [query, query]
+    );
+  } else {
+    products = await dbAsync.all('SELECT * FROM products WHERE isActive = 1');
+  }
+
+  const approvedReviews = await dbAsync.all('SELECT * FROM reviews WHERE approved = 1');
   res.render('index', { 
     title: 'Каталог мёда', 
-    products: activeProducts,
-    reviews: approvedReviews
+    products,
+    reviews: approvedReviews,
+    searchQuery: search || ''
   });
 });
 
@@ -512,11 +576,12 @@ app.get('/cart', (req, res) => {
   });
 });
 
-app.post('/cart/add/:id', (req, res) => {
+app.post('/cart/add/:id', async (req, res) => {
   ensureCart(req);
   const productId = Number(req.params.id);
   const quantity = Number(req.body.quantity) || 1;
-  const product = products.find((p) => p.id === productId && p.isActive);
+  
+  const product = await dbAsync.get('SELECT * FROM products WHERE id = ? AND isActive = 1', [productId]);
   if (!product) {
     return res.redirect('/');
   }
@@ -572,7 +637,7 @@ app.post('/register', async (req, res) => {
   }
   
   // Проверка уникальности телефона
-  const existingByPhone = users.find((u) => u.phone === phone);
+  const existingByPhone = await dbAsync.get('SELECT * FROM users WHERE phone = ?', [phone]);
   if (existingByPhone) {
     return res.render('auth/register', {
       title: 'Регистрация',
@@ -583,7 +648,7 @@ app.post('/register', async (req, res) => {
   
   // Проверка уникальности email (если указан)
   if (email) {
-    const existingByEmail = users.find((u) => u.email === email);
+    const existingByEmail = await dbAsync.get('SELECT * FROM users WHERE email = ?', [email]);
     if (existingByEmail) {
       return res.render('auth/register', {
         title: 'Регистрация',
@@ -594,21 +659,17 @@ app.post('/register', async (req, res) => {
   }
   
   const hash = await bcrypt.hash(password, 10);
-  const newUser = {
-    id: getNextId(users),
-    name,
-    phone,
-    email: email || null,
-    passwordHash: hash,
-    isAdmin: false
-  };
-  users.push(newUser);
+  const result = await dbAsync.run(
+    'INSERT INTO users (name, phone, email, passwordHash, isAdmin) VALUES (?, ?, ?, ?, ?)',
+    [name, phone, email || null, hash, 0]
+  );
+  
   req.session.user = {
-    id: newUser.id,
-    name: newUser.name,
-    email: newUser.email,
-    phone: newUser.phone,
-    isAdmin: newUser.isAdmin
+    id: result.id,
+    name,
+    email: email || null,
+    phone,
+    isAdmin: false
   };
   res.redirect('/');
 });
@@ -631,7 +692,7 @@ app.post('/login', async (req, res) => {
   }
   
   // Ищем пользователя по телефону или email
-  const user = users.find((u) => u.phone === login || u.email === login);
+  const user = await dbAsync.get('SELECT * FROM users WHERE phone = ? OR email = ?', [login, login]);
   
   if (!user) {
     return res.render('auth/login', {
@@ -682,7 +743,7 @@ app.get('/checkout', requireAuth, (req, res) => {
   });
 });
 
-app.post('/checkout', requireAuth, (req, res) => {
+app.post('/checkout', requireAuth, async (req, res) => {
   ensureCart(req);
   if (!req.session.cart.length) {
     return res.redirect('/cart');
@@ -709,39 +770,41 @@ app.post('/checkout', requireAuth, (req, res) => {
   }
 
   const user = req.session.user;
-  const newOrder = {
-    id: getNextId(orders),
-    userId: user.id,
-    customerName: user.name,
-    customerPhone: user.phone,
-    address,
-    comment,
-    paymentMethod,
-    location:
-      latitude && longitude
-        ? {
-            latitude: Number(latitude),
-            longitude: Number(longitude)
-          }
-        : null,
-    items: req.session.cart.map((item) => ({ ...item })),
-    total: getCartTotal(req.session.cart),
-    status: 'new',
-    createdAt: new Date()
-  };
-  orders.push(newOrder);
+  const itemsJson = JSON.stringify(req.session.cart);
+  const total = getCartTotal(req.session.cart);
+
+  const result = await dbAsync.run(
+    `INSERT INTO orders (userId, customerName, customerPhone, address, comment, paymentMethod, latitude, longitude, total, items) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      user.id, 
+      user.name, 
+      user.phone, 
+      address, 
+      comment || '', 
+      paymentMethod, 
+      latitude ? Number(latitude) : null, 
+      longitude ? Number(longitude) : null, 
+      total, 
+      itemsJson
+    ]
+  );
+
   req.session.cart = [];
-  res.redirect(`/order-success/${newOrder.id}`);
+  res.redirect(`/order-success/${result.id}`);
 });
 
 // Страница успешного заказа
-app.get('/order-success/:id', requireAuth, (req, res) => {
+app.get('/order-success/:id', requireAuth, async (req, res) => {
   const orderId = Number(req.params.id);
-  const order = orders.find(o => o.id === orderId && o.userId === req.session.user.id);
+  const order = await dbAsync.get('SELECT * FROM orders WHERE id = ? AND userId = ?', [orderId, req.session.user.id]);
   
   if (!order) {
     return res.redirect('/');
   }
+  
+  // Parse JSON items
+  order.items = JSON.parse(order.items);
   
   res.render('order-success', {
     title: 'Заказ оформлен',
@@ -749,8 +812,40 @@ app.get('/order-success/:id', requireAuth, (req, res) => {
   });
 });
 
+// Личный кабинет - заказы пользователя
+app.get('/my-orders', requireAuth, async (req, res) => {
+  const userId = req.session.user.id;
+  const orders = await dbAsync.all('SELECT * FROM orders WHERE userId = ? ORDER BY createdAt DESC', [userId]);
+  
+  // Parse items for each order
+  orders.forEach(o => {
+    try {
+      o.items = JSON.parse(o.items);
+    } catch (e) {
+      o.items = [];
+    }
+  });
+
+  res.render('my-orders', {
+    title: 'Мои заказы',
+    orders
+  });
+});
+
 // Админ-панель
-app.get('/admin', requireAdmin, (req, res) => {
+app.get('/admin', requireAdmin, async (req, res) => {
+  const products = await dbAsync.all('SELECT * FROM products');
+  const orders = await dbAsync.all('SELECT * FROM orders ORDER BY createdAt DESC');
+  
+  // Parse items for each order
+  orders.forEach(o => {
+    try {
+      o.items = JSON.parse(o.items);
+    } catch (e) {
+      o.items = [];
+    }
+  });
+
   res.render('admin/dashboard', {
     title: 'Админ-панель',
     products,
@@ -767,7 +862,7 @@ app.get('/admin/products/new', requireAdmin, (req, res) => {
   });
 });
 
-app.post('/admin/products', requireAdmin, upload.single('imageFile'), (req, res) => {
+app.post('/admin/products', requireAdmin, upload.single('imageFile'), async (req, res) => {
   const { name, description, price, unit, isActive } = req.body;
   if (!name || !price) {
     return res.render('admin/product-form', {
@@ -781,23 +876,17 @@ app.post('/admin/products', requireAdmin, upload.single('imageFile'), (req, res)
     imagePath = '/uploads/' + req.file.filename;
   }
 
-  const newProduct = {
-    id: getNextId(products),
-    name,
-    description,
-    price: Number(price),
-    unit: unit || '',
-    image: imagePath,
-    isActive: !!isActive
-  };
-  products.push(newProduct);
+  await dbAsync.run(
+    'INSERT INTO products (name, description, price, unit, image, isActive) VALUES (?, ?, ?, ?, ?, ?)',
+    [name, description, price, unit || '', imagePath, isActive ? 1 : 0]
+  );
   res.redirect('/admin');
 });
 
 // Редактирование товара
-app.get('/admin/products/:id/edit', requireAdmin, (req, res) => {
+app.get('/admin/products/:id/edit', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  const product = products.find((p) => p.id === id);
+  const product = await dbAsync.get('SELECT * FROM products WHERE id = ?', [id]);
   if (!product) {
     return res.redirect('/admin');
   }
@@ -808,9 +897,9 @@ app.get('/admin/products/:id/edit', requireAdmin, (req, res) => {
   });
 });
 
-app.post('/admin/products/:id', requireAdmin, upload.single('imageFile'), (req, res) => {
+app.post('/admin/products/:id', requireAdmin, upload.single('imageFile'), async (req, res) => {
   const id = Number(req.params.id);
-  const product = products.find((p) => p.id === id);
+  const product = await dbAsync.get('SELECT * FROM products WHERE id = ?', [id]);
   if (!product) {
     return res.redirect('/admin');
   }
@@ -822,40 +911,38 @@ app.post('/admin/products/:id', requireAdmin, upload.single('imageFile'), (req, 
       error: 'Название и цена обязательны'
     });
   }
-  product.name = name;
-  product.description = description;
-  product.price = Number(price);
-  product.unit = unit || '';
-
+  
+  let imagePath = product.image;
   if (req.file) {
-    product.image = '/uploads/' + req.file.filename;
+    imagePath = '/uploads/' + req.file.filename;
   }
 
-  product.isActive = !!isActive;
+  await dbAsync.run(
+    'UPDATE products SET name = ?, description = ?, price = ?, unit = ?, image = ?, isActive = ? WHERE id = ?',
+    [name, description, Number(price), unit || '', imagePath, isActive ? 1 : 0, id]
+  );
   res.redirect('/admin');
 });
 
 // Удаление товара
-app.post('/admin/products/:id/delete', requireAdmin, (req, res) => {
+app.post('/admin/products/:id/delete', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  products = products.filter((p) => p.id !== id);
+  await dbAsync.run('DELETE FROM products WHERE id = ?', [id]);
   res.redirect('/admin');
 });
 
 // Обновление статуса заказа
-app.post('/admin/orders/:id/status', requireAdmin, (req, res) => {
+app.post('/admin/orders/:id/status', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   const { status } = req.body;
-  const order = orders.find((o) => o.id === id);
-  if (order) {
-    order.status = status || order.status;
-  }
+  await dbAsync.run('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
   res.redirect('/admin');
 });
 
 // Отзывы
-app.get('/reviews', (req, res) => {
-  const productReviews = reviews.filter(r => r.productId && r.approved);
+app.get('/reviews', async (req, res) => {
+  const productReviews = await dbAsync.all('SELECT * FROM reviews WHERE approved = 1');
+  const products = await dbAsync.all('SELECT * FROM products');
   const reviewsByProduct = {};
   
   productReviews.forEach(review => {
@@ -873,37 +960,31 @@ app.get('/reviews', (req, res) => {
   });
 });
 
-app.post('/reviews', (req, res) => {
+app.post('/reviews', async (req, res) => {
   const { orderId, productId, rating, comment, customerName } = req.body;
   
   if (!orderId || !productId || !rating || !customerName) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   
-  const newReview = {
-    id: getNextId(reviews),
-    orderId: Number(orderId),
-    productId: Number(productId),
-    customerName,
-    rating: Number(rating),
-    comment: comment || '',
-    date: new Date().toISOString().split('T')[0],
-    approved: false // Требует модерации
-  };
+  const date = new Date().toISOString().split('T')[0];
   
-  reviews.push(newReview);
+  await dbAsync.run(
+    'INSERT INTO reviews (orderId, productId, customerName, rating, comment, date, approved) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [Number(orderId), Number(productId), customerName, Number(rating), comment || '', date, 0]
+  );
   
   res.json({ 
     success: true, 
-    message: 'Ваш отзыв отправлен на модерацию',
-    review: newReview 
+    message: 'Ваш отзыв отправлен на модерацию'
   });
 });
 
 // Админ-панель - управление отзывами
-app.get('/admin/reviews', requireAdmin, (req, res) => {
-  const pendingReviews = reviews.filter(r => !r.approved);
-  const approvedReviews = reviews.filter(r => r.approved);
+app.get('/admin/reviews', requireAdmin, async (req, res) => {
+  const pendingReviews = await dbAsync.all('SELECT * FROM reviews WHERE approved = 0');
+  const approvedReviews = await dbAsync.all('SELECT * FROM reviews WHERE approved = 1');
+  const products = await dbAsync.all('SELECT * FROM products');
   
   res.render('admin/reviews', {
     title: 'Управление отзывами',
@@ -913,18 +994,15 @@ app.get('/admin/reviews', requireAdmin, (req, res) => {
   });
 });
 
-app.post('/admin/reviews/:id/approve', requireAdmin, (req, res) => {
+app.post('/admin/reviews/:id/approve', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  const review = reviews.find(r => r.id === id);
-  if (review) {
-    review.approved = true;
-  }
+  await dbAsync.run('UPDATE reviews SET approved = 1 WHERE id = ?', [id]);
   res.redirect('/admin/reviews');
 });
 
-app.post('/admin/reviews/:id/delete', requireAdmin, (req, res) => {
+app.post('/admin/reviews/:id/delete', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  reviews = reviews.filter(r => r.id !== id);
+  await dbAsync.run('DELETE FROM reviews WHERE id = ?', [id]);
   res.redirect('/admin/reviews');
 });
 
@@ -953,7 +1031,7 @@ app.use((err, req, res, next) => {
   next();
 });
 
-createDemoAdmin().then(() => {
+Promise.all([createDemoAdmin(), seedProducts()]).then(() => {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Asalchi Amin запущен на http://localhost:${PORT}`);
     console.log(`Для доступа с телефона: http://[IP-адрес]:${PORT}`);

@@ -1,0 +1,124 @@
+<section class="page-header">
+  <div>
+    <h1>Мои заказы</h1>
+    <p class="subtitle">История ваших покупок и статус доставки.</p>
+  </div>
+</section>
+
+<section class="card">
+  <% if (!orders.length) { %>
+    <div class="empty-state">
+      <h3>У вас пока нет заказов</h3>
+      <p>Перейдите в каталог, чтобы выбрать лучший мёд!</p>
+      <a href="/" class="btn">В каталог</a>
+    </div>
+  <% } else { %>
+    <div class="orders-list">
+      <% orders.forEach(order => { %>
+        <div class="order-card">
+          <div class="order-header">
+            <div>
+              <span class="order-number">Заказ №<%= order.id %></span>
+              <span class="order-date"><%= new Date(order.createdAt).toLocaleDateString('ru-RU') %></span>
+            </div>
+            <span class="badge badge-<%= order.status %>">
+              <%= order.status === 'new' ? 'Новый' : 
+                  order.status === 'in_progress' ? 'В работе' : 
+                  order.status === 'done' ? 'Доставлен' : 'Отменён' %>
+            </span>
+          </div>
+          
+          <div class="order-body">
+            <ul class="order-items-mini">
+              <% order.items.forEach(item => { %>
+                <li><%= item.name %> x <%= item.quantity %></li>
+              <% }) %>
+            </ul>
+            <div class="order-total-mini">
+              Итого: <strong><%= order.total.toLocaleString('ru-RU') %> сум</strong>
+            </div>
+          </div>
+          
+          <% if (order.status === 'done') { %>
+            <div class="order-footer">
+              <a href="/order-success/<%= order.id %>" class="btn-small btn-secondary">Оставить отзыв</a>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<style>
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.order-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  background: var(--bg-alt);
+  transition: transform 0.2s ease;
+}
+
+.order-card:hover {
+  border-color: var(--primary-soft);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.order-number {
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.order-date {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.order-body {
+  margin-bottom: 15px;
+}
+
+.order-items-mini {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+}
+
+.order-total-mini {
+  font-size: 16px;
+}
+
+.order-footer {
+  padding-top: 15px;
+  border-top: 1px dashed var(--border);
+}
+
+.badge-new { background: #e3f2fd; color: #1976d2; }
+.badge-in_progress { background: #fff3e0; color: #f57c00; }
+.badge-done { background: #e8f5e9; color: #388e3c; }
+.badge-cancelled { background: #ffebee; color: #d32f2f; }
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+</style>

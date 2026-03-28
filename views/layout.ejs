@@ -72,6 +72,7 @@
           <a href="/cart"><%= t('nav.cart') %> (<%= cartCount %>)</a>
           <a href="/reviews">Отзывы</a>
           <% if (currentUser) { %>
+            <a href="/my-orders">Заказы</a>
             <% if (currentUser.isAdmin) { %>
               <a href="/admin"><%= t('nav.admin') %></a>
             <% } %>

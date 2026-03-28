@@ -13,9 +13,31 @@
   </div>
 </section>
 
+<section class="catalog-filters">
+  <form action="/" method="GET" class="search-form">
+    <div class="search-input-group">
+      <input 
+        type="text" 
+        name="search" 
+        placeholder="Поиск мёда (например, липовый...)" 
+        value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>"
+        class="search-input"
+      >
+      <button type="submit" class="btn-search">🔍</button>
+    </div>
+  </form>
+</section>
+
 <section class="products-grid">
   <% if (!products.length) { %>
-    <p><%= t('home.emptyProducts') %></p>
+    <% if (typeof searchQuery !== 'undefined' && searchQuery) { %>
+      <div class="empty-results">
+        <p>По запросу «<strong><%= searchQuery %></strong>» ничего не найдено.</p>
+        <a href="/" class="btn-ghost">Сбросить поиск</a>
+      </div>
+    <% } else { %>
+      <p><%= t('home.emptyProducts') %></p>
+    <% } %>
   <% } %>
 
   <% products.forEach(product => { %>
