@@ -9,7 +9,10 @@
   <div class="card">
     <div class="card-header">
       <h2>Товары</h2>
-      <a href="/admin/products/new" class="btn-small">+ Новый товар</a>
+      <div class="header-actions">
+        <a href="/admin/reviews" class="btn-small btn-secondary">Отзывы</a>
+        <a href="/admin/products/new" class="btn-small">+ Новый товар</a>
+      </div>
     </div>
 
     <% if (!products.length) { %>

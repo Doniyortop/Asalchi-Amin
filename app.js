@@ -41,15 +41,14 @@ let products = [
   }
 ];
 
-let users = [
-  // Демонстрационный админ-пользователь
-  // email: admin@asalchi.uz, пароль: admin123
-];
-
+let users = [];
 let orders = [];
-
-// In-memory reviews database
 let reviews = [];
+
+// Helper to get next ID
+function getNextId(array) {
+  return array.length > 0 ? Math.max(...array.map(item => item.id)) + 1 : 1;
+}
 
 // Simple i18n
 const SUPPORTED_LANGS = ['ru', 'uz', 'en'];
@@ -387,21 +386,6 @@ const upload = multer({
   }
 });
 
-// Создаём демо-админа при старте
-async function createDemoAdmin() {
-  const existing = users.find((u) => u.email === 'admin@asalchi.uz');
-  if (existing) return;
-  const hash = await bcrypt.hash('admin123', 10);
-  users.push({
-    id: 1,
-    name: 'Администратор',
-    email: 'admin@asalchi.uz',
-    phone: '+998',
-    passwordHash: hash,
-    isAdmin: true
-  });
-}
-
 // Session & middlewares
 app.use(
   session({
@@ -484,7 +468,7 @@ async function createDemoAdmin() {
   if (!existingAdmin) {
     const hash = await bcrypt.hash('admin123', 10);
     users.push({
-      id: 1,
+      id: getNextId(users),
       name: 'Администратор',
       email: 'admin@asalchi.uz',
       phone: '+998',
@@ -611,10 +595,10 @@ app.post('/register', async (req, res) => {
   
   const hash = await bcrypt.hash(password, 10);
   const newUser = {
-    id: users.length ? users[users.length - 1].id + 1 : 2,
+    id: getNextId(users),
     name,
     phone,
-    email: email || null, // email может быть null
+    email: email || null,
     passwordHash: hash,
     isAdmin: false
   };
@@ -726,7 +710,7 @@ app.post('/checkout', requireAuth, (req, res) => {
 
   const user = req.session.user;
   const newOrder = {
-    id: orders.length ? orders[orders.length - 1].id + 1 : 1,
+    id: getNextId(orders),
     userId: user.id,
     customerName: user.name,
     customerPhone: user.phone,
@@ -747,9 +731,21 @@ app.post('/checkout', requireAuth, (req, res) => {
   };
   orders.push(newOrder);
   req.session.cart = [];
+  res.redirect(`/order-success/${newOrder.id}`);
+});
+
+// Страница успешного заказа
+app.get('/order-success/:id', requireAuth, (req, res) => {
+  const orderId = Number(req.params.id);
+  const order = orders.find(o => o.id === orderId && o.userId === req.session.user.id);
+  
+  if (!order) {
+    return res.redirect('/');
+  }
+  
   res.render('order-success', {
     title: 'Заказ оформлен',
-    order: newOrder
+    order
   });
 });
 
@@ -786,7 +782,7 @@ app.post('/admin/products', requireAdmin, upload.single('imageFile'), (req, res)
   }
 
   const newProduct = {
-    id: products.length ? products[products.length - 1].id + 1 : 1,
+    id: getNextId(products),
     name,
     description,
     price: Number(price),
@@ -885,7 +881,7 @@ app.post('/reviews', (req, res) => {
   }
   
   const newReview = {
-    id: reviews.length ? reviews[reviews.length - 1].id + 1 : 1,
+    id: getNextId(reviews),
     orderId: Number(orderId),
     productId: Number(productId),
     customerName,

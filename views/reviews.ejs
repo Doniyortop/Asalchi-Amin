@@ -38,13 +38,12 @@
                 </div>
                 <div class="review-date"><%= review.date %></div>
               </div>
+              <div class="review-content">
+                <% if (review.comment) { %>
+                  <p><%= review.comment %></p>
+                <% } %>
+              </div>
             </div>
-            <div class="review-content">
-              <% if (review.comment) { %>
-                <p><%= review.comment %></p>
-              <% } %>
-            </div>
-          </div>
           <% }); %>
         </div>
       </div>
