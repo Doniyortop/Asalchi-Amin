@@ -72,16 +72,21 @@
           <a href="/cart"><%= t('nav.cart') %> (<%= cartCount %>)</a>
           <a href="/reviews">Отзывы</a>
           <% if (currentUser) { %>
-            <a href="/my-orders">Заказы</a>
-            <% if (currentUser.isAdmin) { %>
-              <a href="/admin"><%= t('nav.admin') %></a>
-            <% } %>
-            <span class="nav-user">
-              <span><%= currentUser.name %></span>
-              <form action="/logout" method="POST" class="inline-form">
-                <button type="submit" class="link-button"><%= t('nav.logout') %></button>
-              </form>
-            </span>
+            <div class="user-menu-dropdown">
+              <span class="nav-user">
+                <span class="user-name-clickable">👤 <%= currentUser.name %></span>
+                <div class="dropdown-content">
+                  <a href="/my-orders">📦 Мои заказы</a>
+                  <% if (currentUser.isAdmin) { %>
+                    <a href="/admin">⚙️ Админ-панель</a>
+                  <% } %>
+                  <hr>
+                  <form action="/logout" method="POST" class="inline-form">
+                    <button type="submit" class="logout-button"><%= t('nav.logout') %></button>
+                  </form>
+                </div>
+              </span>
+            </div>
           <% } else { %>
             <a href="/login"><%= t('nav.login') %></a>
             <a href="/register"><%= t('nav.register') %></a>
