@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
 const bcrypt = require('bcrypt');
 const methodOverride = require('method-override');
 const expressLayouts = require('express-ejs-layouts');
@@ -444,6 +445,10 @@ const upload = multer({
 // Session & middlewares
 app.use(
   session({
+    store: new SQLiteStore({
+      db: 'sessions.sqlite',
+      dir: './'
+    }),
     secret: process.env.SESSION_SECRET || 'asalchi-amin-secret',
     resave: false,
     saveUninitialized: false,
